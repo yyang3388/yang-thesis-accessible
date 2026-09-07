@@ -20,6 +20,9 @@
 % -------------------------------------------------
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{mathrsfs}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+\usepackage{algcompatible}
 
 % Theorem environments
 \newtheorem{theorem}{Theorem}[chapter]
@@ -1643,39 +1646,142 @@ The resolution hyperparameter $K$ could be selected in a data-driven manor by ma
 If the null hypothesis is rejected, the source of dependence can be further investigated by adding an additional step. Specifically, when the dimensions of the random vectors are moderate, the global statistic can be decomposed into a sum of marginal statistics and their interactions. In higher-dimensional settings, such a decomposition may not be feasible. Instead, one can assess the contribution of each dimension to the aggregated adaptive statistic by removing one dimension at a time and ranking their relative importance. This ranking would provide useful insights into the underlying dependence structure.
 yielding an asymptotically level-$\alpha$ test.
 
-\begin{algorithm}[ht]
-\raggedright
+\begin{algorithm}[htbp]
 \caption{wa-dCoBET via 10-fold SNR voting}
 \label{alg:wa-dcobet-compact}
-\DontPrintSemicolon
-\KwIn{Samples $\{(U_i,V_i)\}_{i=1}^n$ with $U_i,V_i\in\mathbb{R}^p$; depth $K$; folds $M=10$; base weights $W^{(\mathrm{id})}=I_{d_K}$, $W^{(J)}=K^{(p)}$; level $\alpha$.}
-\KwOut{Standardized statistic $Z^{(\mathrm{agg})}$ and decision $\mathbf{1}\{Z^{(\mathrm{agg})}>z_{1-\alpha}\}$.}
+\small
 
-\textbf{Features.}
-Construct centered binary-expansion features $A_i,B_i\in\mathbb{R}^{d_K}$ at depth $K$ and their sample covariances $\hat\Sigma_A,\hat\Sigma_B$.\;
+\begin{algorithmic}[1]
 
-\textbf{Fold split.}
-Partition $\{1,\dots,n\}$ into $M$ disjoint folds $F_1,\dots,F_M$ (nearly equal sizes).\;
+\State \textbf{Input:}
+Samples $\{(U_i,V_i)\}_{i=1}^n$ with
+$U_i,V_i\in\mathbb{R}^p$; depth $K$; number of folds $M=10$;
+base weights
+$W^{(\mathrm{id})}=I_{d_K}$ and
+$W^{(J)}=K^{(p)}$; significance level $\alpha$
 
-\textbf{Foldwise SNRs.}
-\For{$m=1$ \KwTo $M$}{
-  Using only indices in $F_m$, compute $Z_m^{(\mathrm{id})}$ and $Z_m^{(J)}$ where
-  $Z_m^{(W)} := T^{(W)}(F_m) \big/ \sqrt{\widehat{\mathrm{Var}}(\tilde T_1^{(W)})(F_m)}$.\; \\
-  Record $S_m \gets \arg\max\{Z_m^{(\mathrm{id})}, Z_m^{(J)}\}$.\;
+\State \textbf{Output:}
+Standardized statistic $Z^{(\mathrm{agg})}$ and decision
+$\mathbf{1}\{Z^{(\mathrm{agg})}>z_{1-\alpha}\}$
+
+\Statex
+
+\State \textbf{Features:}
+Construct centered binary-expansion features
+$A_i,B_i\in\mathbb{R}^{d_K}$ at depth $K$ and compute their
+sample covariance matrices
+$\widehat{\Sigma}_A$ and $\widehat{\Sigma}_B$
+
+\Statex
+
+\State \textbf{Fold split:}
+Partition $\{1,\ldots,n\}$ into $M$ disjoint folds
+$F_1,\ldots,F_M$ of nearly equal sizes
+
+\Statex
+
+\State \textbf{Foldwise SNRs:}
+
+\For{$m=1,\ldots,M$}
+
+    \State Using only observations indexed by $F_m$, compute
+    $Z_m^{(\mathrm{id})}$ and $Z_m^{(J)}$
+
+    \State For $W\in\{\mathrm{id},J\}$, define
+    \[
+    Z_m^{(W)}
+    \gets
+    \frac{
+        T^{(W)}(F_m)
+    }{
+        \sqrt{
+            \widehat{\mathrm{Var}}
+            \bigl(\widetilde{T}_1^{(W)}\bigr)(F_m)
+        }
+    }
+    \]
+
+    \State Record
+    \[
+    S_m
+    \gets
+    \arg\max_{W\in\{\mathrm{id},J\}}
+    Z_m^{(W)}
+    \]
+
+\EndFor
+
+\Statex
+
+\State \textbf{Aggregate weights:}
+
+\State Set
+\[
+w_{\mathrm{id}}
+\gets
+\frac{1}{M}
+\sum_{m=1}^{M}
+\mathbf{1}\{S_m=\mathrm{id}\},
+\qquad
+w_J\gets 1-w_{\mathrm{id}}
+\]
+
+\State Form the blended PSD weights
+\[
+W_A^{(\mathrm{agg})}
+\gets
+w_{\mathrm{id}}W_A^{(\mathrm{id})}
++
+w_JW_A^{(J)}
+\]
+
+\State
+\[
+W_B^{(\mathrm{agg})}
+\gets
+w_{\mathrm{id}}W_B^{(\mathrm{id})}
++
+w_JW_B^{(J)}
+\]
+
+\Statex
+
+\State \textbf{Full-sample test:}
+
+\State Compute
+\[
+T^{(\mathrm{agg})}
+\gets
+T^{(W^{(\mathrm{agg})})}
+\]
+and
+$\widehat{\mathrm{Var}}
+(\widetilde{T}_1^{(\mathrm{agg})})$
+using the full sample
+
+\State Set
+\[
+Z^{(\mathrm{agg})}
+\gets
+\frac{
+    T^{(\mathrm{agg})}
+}{
+    \sqrt{
+        \widehat{\mathrm{Var}}
+        (\widetilde{T}_1^{(\mathrm{agg})})
+    }
 }
+\]
 
-\textbf{Aggregate weights.}
-Set $w_{\mathrm{id}} \gets \frac{1}{M}\sum_{m=1}^M \mathbf{1}\{S_m=\mathrm{id}\}$, $w_J \gets 1-w_{\mathrm{id}}$.\; \\
-Form blended PSD weights
-$W_A^{(\mathrm{agg})} \gets w_{\mathrm{id}} W_A^{(\mathrm{id})} + w_J W_A^{(J)}$,
-$W_B^{(\mathrm{agg})} \gets w_{\mathrm{id}} W_B^{(\mathrm{id})} + w_J W_B^{(J)}$.\;
+\Statex
 
-\textbf{Full-sample test.}
-Compute $T^{(\mathrm{agg})} := T^{(W^{(\mathrm{agg})})}$ and
-$\widehat{\mathrm{Var}}(\tilde T_1^{(\mathrm{agg})})$ on the full sample.\; \\
-Set $Z^{(\mathrm{agg})} \gets T^{(\mathrm{agg})} / \sqrt{\widehat{\mathrm{Var}}(\tilde T_1^{(\mathrm{agg})})}$.\;
+\State \textbf{Decision:}
+Reject $H_0$ if
+\[
+Z^{(\mathrm{agg})}>z_{1-\alpha}
+\]
 
-\textbf{Decision.} Reject $H_0$ iff $Z^{(\mathrm{agg})}>z_{1-\alpha}$.\;
+\end{algorithmic}
 \end{algorithm}
 
 \section{Numerical Studies}
@@ -4688,58 +4794,7 @@ The corresponding collection of subsample index sets is
 \]
 which is constructed according to Algorithm~\ref{alg:subsampling} described in \cite{guo2024ranktransformed}.
 
-% ============================================================
-% Construction of subsample index tuples
-% Accessible EPUB version + original PDF version
-% ============================================================
-
-\iflatexml
-
-\noindent
-\textbf{Algorithm: Construction of subsample index tuples}
-
-\begin{enumerate}
-
-    \item \textbf{Input:}
-    Sample size $n$, subsample size $m$, and positive integer $J$.
-
-    \item Initialize
-    \[
-    \mathcal{B}\gets\emptyset.
-    \]
-
-    \item For $j=1,\ldots,J$, perform the following steps:
-    \begin{enumerate}
-
-        \item Generate a random permutation
-        \[
-        \pi=(\pi_1,\ldots,\pi_n)
-        \]
-        of $\{1,\ldots,n\}$.
-
-        \item Add the nonoverlapping subsample index tuples of
-        size $m$ to $\mathcal{B}$:
-        \[
-        \mathcal{B}\gets \mathcal{B}\cup
-        \left\{
-        (\pi_1,\ldots,\pi_m),
-        (\pi_{m+1},\ldots,\pi_{2m}),
-        \ldots,
-        (\pi_{(\lfloor n/m\rfloor-1)m+1},
-        \ldots,
-        \pi_{\lfloor n/m\rfloor m})
-        \right\}.
-        \]
-
-    \end{enumerate}
-
-    \item \textbf{Return} $\mathcal{B}$.
-
-\end{enumerate}
-
-\else
-
-\begin{algorithm}[htbp!]
+\begin{algorithm}[htbp]
 \caption{Construction of subsample index tuples}
 \label{alg:subsampling}
 
@@ -4771,29 +4826,14 @@ and positive integer $J$
 \end{algorithmic}
 \end{algorithm}
 
-\fi
-
-
-% ============================================================
-% Subsampling distribution
-% ============================================================
-
-For each subsample, the corresponding test statistics are arranged into a
-$B\times L$ matrix
+For each subsample, the corresponding test statistics are arranged into a $B\times L$ matrix
 \[
 \widehat{H}=(\widehat{H}_{b,l}),
 \]
 whose $b$-th row is given by
-\[
-\widehat{H}_{b,\cdot}
-:=
-\left(
-T_m^{(1)}(X_{{i}_{1,b}},\ldots,X_{{i}_{m,b}}),
-\ldots,
-T_m^{(L)}(X_{{i}_{1,b}},\ldots,X_{{i}_{m,b}})
-\right),
-\qquad b=1,\ldots,B.
-\]
+\begin{center}
+$\widehat{H}_{b,\cdot}:=(T_m^{(1)}(X_{{i}_{1,b}},\cdots,X_{{i}_{m,b}}), \cdots, T_m^{(L)}(X_{{i}_{1,b}},\cdots,X_{{i}_{m,b}})),  \hspace{1cm} b=1,\cdots,B.$
+\end{center}
 
 Applying the aggregation function to each row yields
 \[
@@ -4807,280 +4847,80 @@ whose empirical distribution function
 =
 \mathbb{F}_{\{\widehat{\Lambda}_b\}}(x)
 \]
-provides a natural subsampling approximation to the limiting distribution
-$G_p(x)$.
+provides a natural subsampling approximation to the limiting distribution $G_p(x)$.
 
-
-% ============================================================
-% Rank transformation
-% ============================================================
-
-\medskip
-\noindent
+\hspace{0.5cm}
 \textbf{Rank transformation.}
-Let $\mathbb{F}_{\widehat{H}}$ denote the empirical distribution function
-of all entries in $\widehat{H}$. We transform each entry according to
-\[
-\tilde{H}_{b,l}
-=
-F_0^{-1}
-\left\{
-\frac{R_{b,l}-1/2}{BL}
-\right\},
-\]
+Let $\mathbb{F}_{\widehat{H}}$ denote the empirical distribution function of all entries in $\widehat{H}$. We transform each entry according to
+\begin{center}
+    $\tilde{H}_{b,l}
+    = F_0^{-1}\{(R_{b,l}-1/2 )/(BL)\},$
+\end{center}
 where $R_{b,l}$ denotes the rank of
 $T_m^{(l)}(\mathcal{D}_2^{(b)})$
 among all
 $\{T_m^{(l)}(\mathcal{D}_2^{(b)})\}$
-for $b=1,\ldots,B$ and $l=1,\ldots,L$, and $F_0$ is the cumulative
-distribution function of the standard normal distribution.
+for
+$b=1,\ldots,B$
+and
+$l=1,\ldots,L$,
+and $F_0$ is the cumulative distribution function of the standard normal distribution.
 
 The transformed statistics are then aggregated as
-\[
-\tilde{\Lambda}_{b}
-:=
-\Lambda_n(
-\tilde{H}_{b,1},
-\ldots,
-\tilde{H}_{b,L}
-),
-\]
+\begin{center}
+    $\tilde{\Lambda}_{b}:= \Lambda_n(\tilde{H}_{b,1},\cdots,\tilde{H}_{b,L}),$
+\end{center}
 and their empirical distribution
 \[
-\tilde{G}_n(x)
+\tilde{G}_n
 =
 \mathbb{F}_{\{\tilde{\Lambda}_b\}}(x)
 \]
 is used to estimate the critical value
 $\tilde{G}_n^{-1}(1-\alpha)$
-for the aggregated statistic $\Lambda_n$.
-
-The complete multiple-splitting procedure is summarized in
-Algorithm~\ref{alg:multiple-split}.
-
-% ============================================================
-% Rank-transformed aggregated multiple-split test
-% Accessible EPUB version + original PDF version
-% ============================================================
-
-\iflatexml
-
-\refstepcounter{algorithm}
-\label{alg:multiple-split}
-
-\noindent
-\textbf{Algorithm \thealgorithm: Rank-transformed aggregated
-multiple-split test}
-
-\begin{enumerate}
-
-    \item \textbf{Input:}
-    Observations $X_1,\ldots,X_n$;
-    exchangeable single-split statistics
-    $T_n^{(1)},\ldots,T_n^{(L)}$;
-    limiting null CDF $F_0$;
-    aggregation rule $\Lambda_n$;
-    significance level $\alpha\in(0,1)$;
-    and positive integer $J$.
-
-    \item Set
-    \[
-    m\gets \left\lfloor \frac{n}{\log n}\right\rfloor,
-    \qquad
-    B\gets J\left\lfloor \frac{n}{m}\right\rfloor.
-    \]
-
-    \item Generate the subsample index collection
-    \[
-    \mathcal{B}
-    =
-    \left\{
-    (i_{1,b},\ldots,i_{m,b})
-    :
-    b=1,\ldots,B
-    \right\}
-    \]
-    using Algorithm~\ref{alg:subsampling}.
-
-    \item Initialize the $B\times L$ matrices
-    $\widehat{H}$ and $\widetilde{H}$,
-    together with
-    \[
-    \widetilde{\Lambda}\in\mathbb{R}^{B}.
-    \]
-
-    \item For each $b=1,\ldots,B$, compute
-    \[
-    \widehat{H}_{b,\cdot}
-    \gets
-    \left(
-    T_m^{(1)}(X_{i_{1,b}},\ldots,X_{i_{m,b}}),
-    \ldots,
-    T_m^{(L)}(X_{i_{1,b}},\ldots,X_{i_{m,b}})
-    \right).
-    \]
-
-    \item For each $b=1,\ldots,B$, perform the following:
-
-    \begin{enumerate}
-
-        \item For each $l=1,\ldots,L$, set
-        \[
-        \widetilde{H}_{b,l}
-        \gets
-        F_0^{-1}
-        \left\{
-        \frac{R_{b,l}-1/2}{BL}
-        \right\}.
-        \]
-
-        \item Aggregate the transformed statistics:
-        \[
-        \widetilde{\Lambda}_b
-        \gets
-        \Lambda_n
-        \left(
-        |\widetilde{H}_{b,1}|,
-        \ldots,
-        |\widetilde{H}_{b,L}|
-        \right).
-        \]
-
-    \end{enumerate}
-
-    \item Define the empirical distribution
-    \[
-    \widetilde{G}_n
-    \gets
-    \mathbb{F}_{
-    \{\widetilde{\Lambda}_b:
-    b=1,\ldots,B\}
-    }.
-    \]
-
-    \item Using the full sample
-    $X_1,\ldots,X_n$, compute
-    \[
-    \Lambda_n
-    \gets
-    \Lambda_n
-    \left(
-    |T_n^{(1)}|,
-    \ldots,
-    |T_n^{(L)}|
-    \right).
-    \]
-
-    \item \textbf{Decision:}
-    Reject $H_0$ if
-    \[
-    \Lambda_n
-    >
-    \widetilde{G}_n^{-1}(1-\alpha/2).
-    \]
-    Report the p-value
-    \[
-    1-\widetilde{G}_n(\Lambda_n).
-    \]
-
-\end{enumerate}
-
-\else
+for the aggregated statistic $\Lambda_n$. The complete multiple-splitting procedure is summarized in Algorithm \ref{alg:multiple-split}.
 
 \begin{algorithm}[htbp!]
 \caption{Rank-transformed aggregated multiple-split test}
 \label{alg:multiple-split}
 
 \begin{algorithmic}[1]
+\State \textbf{Input:} Observations $X_1,\ldots,X_n$; exchangeable single-split statistics $T_n^{(1)},\ldots,T_n^{(L)}$; limiting null CDF $F_0$; aggregation rule $\Lambda_n$; significance level $\alpha\in(0,1)$; positive integer $J$
 
-\State \textbf{Input:} Observations $X_1,\ldots,X_n$;
-exchangeable single-split statistics
-$T_n^{(1)},\ldots,T_n^{(L)}$;
-limiting null CDF $F_0$;
-aggregation rule $\Lambda_n$;
-significance level $\alpha\in(0,1)$;
-positive integer $J$
-
-\State Set
-$m\gets \lfloor n/\log n\rfloor$
-and
-$B\gets J\lfloor n/m\rfloor$
+\State Set $m\gets \lfloor n/\log n\rfloor$ and $B\gets J\lfloor n/m\rfloor$
 
 \State Generate the subsample index collection
-$\mathcal{B}
-=
-\{(i_{1,b},\ldots,i_{m,b}):
-b=1,\ldots,B\}$
+$\mathcal{B}=\{(i_{1,b},\ldots,i_{m,b}): b=1,\ldots,B\}$
 using Algorithm~\ref{alg:subsampling}
 
-\State Initialize $B\times L$ matrices
-$\widehat{H}$ and $\widetilde{H}$,
-together with a vector
-$\widetilde{\Lambda}\in\mathbb{R}^{B}$
+\State Initialize $B\times L$ matrices $\widehat{H}$ and $\widetilde{H}$, together with a vector $\widetilde{\Lambda}\in\mathbb{R}^{B}$
 
 \For{$b=1,\ldots,B$}
-
-    \State
-    $\widehat{H}_{b,\cdot}\gets
-    \big(
-    T_m^{(1)}(X_{i_{1,b}},\ldots,X_{i_{m,b}}),
-    \ldots,
-    T_m^{(L)}(X_{i_{1,b}},\ldots,X_{i_{m,b}})
-    \big)$
-
+    \State $\widehat{H}_{b,\cdot}\gets
+    \big(T_m^{(1)}(X_{i_{1,b}},\ldots,X_{i_{m,b}}),\ldots,
+    T_m^{(L)}(X_{i_{1,b}},\ldots,X_{i_{m,b}})\big)$
 \EndFor
 
 \For{$b=1,\ldots,B$}
-
     \For{$l=1,\ldots,L$}
-
-        \State
-        $\widetilde{H}_{b,l}
-        \gets
-        F_0^{-1}
-        \{(R_{b,l}-1/2)/(BL)\}$
-
+        \State $\widetilde{H}_{b,l}\gets F_0^{-1}\{(R_{b,l}-1/2)/(BL)\}$
     \EndFor
-
-    \State
-    $\widetilde{\Lambda}_b
-    \gets
-    \Lambda_n(
-    |\widetilde{H}_{b,1}|,
-    \ldots,
-    |\widetilde{H}_{b,L}|
-    )$
-
+    \State $\widetilde{\Lambda}_b\gets
+    \Lambda_n(|\widetilde{H}_{b,1}|,\ldots,|\widetilde{H}_{b,L}|)$
 \EndFor
 
-\State Define
-$\widetilde{G}_n
-\gets
-\mathbb{F}_{
-\{\widetilde{\Lambda}_b:
-b=1,\ldots,B\}
-}$
+\State Define $\widetilde{G}_n\gets \mathbb{F}_{\{\widetilde{\Lambda}_b:\,b=1,\ldots,B\}}$
 
 \State Compute the full-sample statistic
-$\Lambda_n
-\gets
-\Lambda_n(
-|T_n^{(1)}|,
-\ldots,
-|T_n^{(L)}|
-)$
+$\Lambda_n\gets \Lambda_n(|T_n^{(1)}|,\ldots,|T_n^{(L)}|)$
 using $X_1,\ldots,X_n$
 
 \State Reject $H_0$ if
-$\Lambda_n>
-\widetilde{G}_n^{-1}(1-\alpha/2)$;
-report the p-value
-$1-\widetilde{G}_n(\Lambda_n)$
+$\Lambda_n>\widetilde{G}_n^{-1}(1-\alpha/2)$;
+report the p-value $1-\widetilde{G}_n(\Lambda_n)$
 
 \end{algorithmic}
 \end{algorithm}
-
-\fi
 
 
 
