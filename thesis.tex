@@ -4688,33 +4688,112 @@ The corresponding collection of subsample index sets is
 \]
 which is constructed according to Algorithm~\ref{alg:subsampling} described in \cite{guo2024ranktransformed}.
 
+% ============================================================
+% Construction of subsample index tuples
+% Accessible EPUB version + original PDF version
+% ============================================================
+
+\iflatexml
+
+\noindent
+\textbf{Algorithm: Construction of subsample index tuples}
+
+\begin{enumerate}
+
+    \item \textbf{Input:}
+    Sample size $n$, subsample size $m$, and positive integer $J$.
+
+    \item Initialize
+    \[
+    \mathcal{B}\gets\emptyset.
+    \]
+
+    \item For $j=1,\ldots,J$, perform the following steps:
+    \begin{enumerate}
+
+        \item Generate a random permutation
+        \[
+        \pi=(\pi_1,\ldots,\pi_n)
+        \]
+        of $\{1,\ldots,n\}$.
+
+        \item Add the nonoverlapping subsample index tuples of
+        size $m$ to $\mathcal{B}$:
+        \[
+        \mathcal{B}\gets \mathcal{B}\cup
+        \left\{
+        (\pi_1,\ldots,\pi_m),
+        (\pi_{m+1},\ldots,\pi_{2m}),
+        \ldots,
+        (\pi_{(\lfloor n/m\rfloor-1)m+1},
+        \ldots,
+        \pi_{\lfloor n/m\rfloor m})
+        \right\}.
+        \]
+
+    \end{enumerate}
+
+    \item \textbf{Return} $\mathcal{B}$.
+
+\end{enumerate}
+
+\else
+
 \begin{algorithm}[htbp!]
 \caption{Construction of subsample index tuples}
 \label{alg:subsampling}
 
 \begin{algorithmic}[1]
-\State \textbf{Input:} Sample size $n$, subsample size $m$, and positive integer $J$
+
+\State \textbf{Input:} Sample size $n$, subsample size $m$,
+and positive integer $J$
+
 \State $\mathcal{B}\gets\emptyset$
 
 \For{$j=1,\ldots,J$}
-    \State Generate a random permutation $\pi=(\pi_1,\ldots,\pi_n)$ of $\{1,\ldots,n\}$
+
+    \State Generate a random permutation
+    $\pi=(\pi_1,\ldots,\pi_n)$
+    of $\{1,\ldots,n\}$
+
     \State $\mathcal{B}\gets \mathcal{B}\cup
-    \{(\pi_1,\ldots,\pi_m),(\pi_{m+1},\ldots,\pi_{2m}),\ldots,
-    (\pi_{(\lfloor n/m\rfloor-1)m+1},\ldots,\pi_{\lfloor n/m\rfloor m})\}$
+    \{(\pi_1,\ldots,\pi_m),
+    (\pi_{m+1},\ldots,\pi_{2m}),
+    \ldots,
+    (\pi_{(\lfloor n/m\rfloor-1)m+1},
+    \ldots,
+    \pi_{\lfloor n/m\rfloor m})\}$
+
 \EndFor
 
 \State \textbf{return} $\mathcal{B}$
+
 \end{algorithmic}
 \end{algorithm}
 
-For each subsample, the corresponding test statistics are arranged into a $B\times L$ matrix
+\fi
+
+
+% ============================================================
+% Subsampling distribution
+% ============================================================
+
+For each subsample, the corresponding test statistics are arranged into a
+$B\times L$ matrix
 \[
 \widehat{H}=(\widehat{H}_{b,l}),
 \]
 whose $b$-th row is given by
-\begin{center}
-$\widehat{H}_{b,\cdot}:=(T_m^{(1)}(X_{{i}_{1,b}},\cdots,X_{{i}_{m,b}}), \cdots, T_m^{(L)}(X_{{i}_{1,b}},\cdots,X_{{i}_{m,b}})),  \hspace{1cm} b=1,\cdots,B.$
-\end{center}
+\[
+\widehat{H}_{b,\cdot}
+:=
+\left(
+T_m^{(1)}(X_{{i}_{1,b}},\ldots,X_{{i}_{m,b}}),
+\ldots,
+T_m^{(L)}(X_{{i}_{1,b}},\ldots,X_{{i}_{m,b}})
+\right),
+\qquad b=1,\ldots,B.
+\]
 
 Applying the aggregation function to each row yields
 \[
@@ -4728,80 +4807,280 @@ whose empirical distribution function
 =
 \mathbb{F}_{\{\widehat{\Lambda}_b\}}(x)
 \]
-provides a natural subsampling approximation to the limiting distribution $G_p(x)$.
+provides a natural subsampling approximation to the limiting distribution
+$G_p(x)$.
 
-\hspace{0.5cm}
+
+% ============================================================
+% Rank transformation
+% ============================================================
+
+\medskip
+\noindent
 \textbf{Rank transformation.}
-Let $\mathbb{F}_{\widehat{H}}$ denote the empirical distribution function of all entries in $\widehat{H}$. We transform each entry according to
-\begin{center}
-    $\tilde{H}_{b,l}
-    = F_0^{-1}\{(R_{b,l}-1/2 )/(BL)\},$
-\end{center}
+Let $\mathbb{F}_{\widehat{H}}$ denote the empirical distribution function
+of all entries in $\widehat{H}$. We transform each entry according to
+\[
+\tilde{H}_{b,l}
+=
+F_0^{-1}
+\left\{
+\frac{R_{b,l}-1/2}{BL}
+\right\},
+\]
 where $R_{b,l}$ denotes the rank of
 $T_m^{(l)}(\mathcal{D}_2^{(b)})$
 among all
 $\{T_m^{(l)}(\mathcal{D}_2^{(b)})\}$
-for
-$b=1,\ldots,B$
-and
-$l=1,\ldots,L$,
-and $F_0$ is the cumulative distribution function of the standard normal distribution.
+for $b=1,\ldots,B$ and $l=1,\ldots,L$, and $F_0$ is the cumulative
+distribution function of the standard normal distribution.
 
 The transformed statistics are then aggregated as
-\begin{center}
-    $\tilde{\Lambda}_{b}:= \Lambda_n(\tilde{H}_{b,1},\cdots,\tilde{H}_{b,L}),$
-\end{center}
+\[
+\tilde{\Lambda}_{b}
+:=
+\Lambda_n(
+\tilde{H}_{b,1},
+\ldots,
+\tilde{H}_{b,L}
+),
+\]
 and their empirical distribution
 \[
-\tilde{G}_n
+\tilde{G}_n(x)
 =
 \mathbb{F}_{\{\tilde{\Lambda}_b\}}(x)
 \]
 is used to estimate the critical value
 $\tilde{G}_n^{-1}(1-\alpha)$
-for the aggregated statistic $\Lambda_n$. The complete multiple-splitting procedure is summarized in Algorithm \ref{alg:multiple-split}.
+for the aggregated statistic $\Lambda_n$.
+
+The complete multiple-splitting procedure is summarized in
+Algorithm~\ref{alg:multiple-split}.
+
+% ============================================================
+% Rank-transformed aggregated multiple-split test
+% Accessible EPUB version + original PDF version
+% ============================================================
+
+\iflatexml
+
+\refstepcounter{algorithm}
+\label{alg:multiple-split}
+
+\noindent
+\textbf{Algorithm \thealgorithm: Rank-transformed aggregated
+multiple-split test}
+
+\begin{enumerate}
+
+    \item \textbf{Input:}
+    Observations $X_1,\ldots,X_n$;
+    exchangeable single-split statistics
+    $T_n^{(1)},\ldots,T_n^{(L)}$;
+    limiting null CDF $F_0$;
+    aggregation rule $\Lambda_n$;
+    significance level $\alpha\in(0,1)$;
+    and positive integer $J$.
+
+    \item Set
+    \[
+    m\gets \left\lfloor \frac{n}{\log n}\right\rfloor,
+    \qquad
+    B\gets J\left\lfloor \frac{n}{m}\right\rfloor.
+    \]
+
+    \item Generate the subsample index collection
+    \[
+    \mathcal{B}
+    =
+    \left\{
+    (i_{1,b},\ldots,i_{m,b})
+    :
+    b=1,\ldots,B
+    \right\}
+    \]
+    using Algorithm~\ref{alg:subsampling}.
+
+    \item Initialize the $B\times L$ matrices
+    $\widehat{H}$ and $\widetilde{H}$,
+    together with
+    \[
+    \widetilde{\Lambda}\in\mathbb{R}^{B}.
+    \]
+
+    \item For each $b=1,\ldots,B$, compute
+    \[
+    \widehat{H}_{b,\cdot}
+    \gets
+    \left(
+    T_m^{(1)}(X_{i_{1,b}},\ldots,X_{i_{m,b}}),
+    \ldots,
+    T_m^{(L)}(X_{i_{1,b}},\ldots,X_{i_{m,b}})
+    \right).
+    \]
+
+    \item For each $b=1,\ldots,B$, perform the following:
+
+    \begin{enumerate}
+
+        \item For each $l=1,\ldots,L$, set
+        \[
+        \widetilde{H}_{b,l}
+        \gets
+        F_0^{-1}
+        \left\{
+        \frac{R_{b,l}-1/2}{BL}
+        \right\}.
+        \]
+
+        \item Aggregate the transformed statistics:
+        \[
+        \widetilde{\Lambda}_b
+        \gets
+        \Lambda_n
+        \left(
+        |\widetilde{H}_{b,1}|,
+        \ldots,
+        |\widetilde{H}_{b,L}|
+        \right).
+        \]
+
+    \end{enumerate}
+
+    \item Define the empirical distribution
+    \[
+    \widetilde{G}_n
+    \gets
+    \mathbb{F}_{
+    \{\widetilde{\Lambda}_b:
+    b=1,\ldots,B\}
+    }.
+    \]
+
+    \item Using the full sample
+    $X_1,\ldots,X_n$, compute
+    \[
+    \Lambda_n
+    \gets
+    \Lambda_n
+    \left(
+    |T_n^{(1)}|,
+    \ldots,
+    |T_n^{(L)}|
+    \right).
+    \]
+
+    \item \textbf{Decision:}
+    Reject $H_0$ if
+    \[
+    \Lambda_n
+    >
+    \widetilde{G}_n^{-1}(1-\alpha/2).
+    \]
+    Report the p-value
+    \[
+    1-\widetilde{G}_n(\Lambda_n).
+    \]
+
+\end{enumerate}
+
+\else
 
 \begin{algorithm}[htbp!]
 \caption{Rank-transformed aggregated multiple-split test}
 \label{alg:multiple-split}
 
 \begin{algorithmic}[1]
-\State \textbf{Input:} Observations $X_1,\ldots,X_n$; exchangeable single-split statistics $T_n^{(1)},\ldots,T_n^{(L)}$; limiting null CDF $F_0$; aggregation rule $\Lambda_n$; significance level $\alpha\in(0,1)$; positive integer $J$
 
-\State Set $m\gets \lfloor n/\log n\rfloor$ and $B\gets J\lfloor n/m\rfloor$
+\State \textbf{Input:} Observations $X_1,\ldots,X_n$;
+exchangeable single-split statistics
+$T_n^{(1)},\ldots,T_n^{(L)}$;
+limiting null CDF $F_0$;
+aggregation rule $\Lambda_n$;
+significance level $\alpha\in(0,1)$;
+positive integer $J$
+
+\State Set
+$m\gets \lfloor n/\log n\rfloor$
+and
+$B\gets J\lfloor n/m\rfloor$
 
 \State Generate the subsample index collection
-$\mathcal{B}=\{(i_{1,b},\ldots,i_{m,b}): b=1,\ldots,B\}$
+$\mathcal{B}
+=
+\{(i_{1,b},\ldots,i_{m,b}):
+b=1,\ldots,B\}$
 using Algorithm~\ref{alg:subsampling}
 
-\State Initialize $B\times L$ matrices $\widehat{H}$ and $\widetilde{H}$, together with a vector $\widetilde{\Lambda}\in\mathbb{R}^{B}$
+\State Initialize $B\times L$ matrices
+$\widehat{H}$ and $\widetilde{H}$,
+together with a vector
+$\widetilde{\Lambda}\in\mathbb{R}^{B}$
 
 \For{$b=1,\ldots,B$}
-    \State $\widehat{H}_{b,\cdot}\gets
-    \big(T_m^{(1)}(X_{i_{1,b}},\ldots,X_{i_{m,b}}),\ldots,
-    T_m^{(L)}(X_{i_{1,b}},\ldots,X_{i_{m,b}})\big)$
+
+    \State
+    $\widehat{H}_{b,\cdot}\gets
+    \big(
+    T_m^{(1)}(X_{i_{1,b}},\ldots,X_{i_{m,b}}),
+    \ldots,
+    T_m^{(L)}(X_{i_{1,b}},\ldots,X_{i_{m,b}})
+    \big)$
+
 \EndFor
 
 \For{$b=1,\ldots,B$}
+
     \For{$l=1,\ldots,L$}
-        \State $\widetilde{H}_{b,l}\gets F_0^{-1}\{(R_{b,l}-1/2)/(BL)\}$
+
+        \State
+        $\widetilde{H}_{b,l}
+        \gets
+        F_0^{-1}
+        \{(R_{b,l}-1/2)/(BL)\}$
+
     \EndFor
-    \State $\widetilde{\Lambda}_b\gets
-    \Lambda_n(|\widetilde{H}_{b,1}|,\ldots,|\widetilde{H}_{b,L}|)$
+
+    \State
+    $\widetilde{\Lambda}_b
+    \gets
+    \Lambda_n(
+    |\widetilde{H}_{b,1}|,
+    \ldots,
+    |\widetilde{H}_{b,L}|
+    )$
+
 \EndFor
 
-\State Define $\widetilde{G}_n\gets \mathbb{F}_{\{\widetilde{\Lambda}_b:\,b=1,\ldots,B\}}$
+\State Define
+$\widetilde{G}_n
+\gets
+\mathbb{F}_{
+\{\widetilde{\Lambda}_b:
+b=1,\ldots,B\}
+}$
 
 \State Compute the full-sample statistic
-$\Lambda_n\gets \Lambda_n(|T_n^{(1)}|,\ldots,|T_n^{(L)}|)$
+$\Lambda_n
+\gets
+\Lambda_n(
+|T_n^{(1)}|,
+\ldots,
+|T_n^{(L)}|
+)$
 using $X_1,\ldots,X_n$
 
 \State Reject $H_0$ if
-$\Lambda_n>\widetilde{G}_n^{-1}(1-\alpha/2)$;
-report the p-value $1-\widetilde{G}_n(\Lambda_n)$
+$\Lambda_n>
+\widetilde{G}_n^{-1}(1-\alpha/2)$;
+report the p-value
+$1-\widetilde{G}_n(\Lambda_n)$
 
 \end{algorithmic}
 \end{algorithm}
+
+\fi
 
 
 
